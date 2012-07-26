@@ -62,20 +62,17 @@ typedef struct {
  * Elastic node structure.
  * Store velocity and stress tensor (http://en.wikipedia.org/wiki/Stress_%28mechanics%29).
  */
-typedef union {
-	struct {
-		le_vec2 v;
-		le_smatrix2 s;
-	};
-	struct {
-		real w1, w2, w3, w4, w5;
-	};
+typedef struct {
+	le_vec2 v;
+	le_smatrix2 s;
 } le_node;
 
 /*
  * Riemann invariant structure (http://en.wikipedia.org/wiki/Riemann_invariant).
  */
-typedef le_node le_w;
+typedef struct {
+	real w1, w2, w3, w4/*, w5*/;
+} le_w;
 
 /*
  * Elastic material structure.
@@ -158,5 +155,11 @@ void le_step(le_task *task);
  * Cache friendly version.
  */
 void le_step_cf(le_task *task, const int cfs);
+
+/*
+ * One time step of difference scheme.
+ * SOA version.
+ */
+void le_step_soa(le_task *task);
 
 #endif //LE_CORE_H

@@ -13,6 +13,13 @@
 #define ind(i, j) ((i) + (j) * t->n.x)
 #define gind(i, j) (((le_node*)t->grid)[ind((i), (j))])
 
+#define soa_ind(i, j, k) (t->grid[k * t->n.x * t->n.y + ind((i), (j))])
+#define soa_vx(i, j) soa_ind(i, j, 0)
+#define soa_vy(i, j) soa_ind(i, j, 1)
+#define soa_sxx(i, j) soa_ind(i, j, 2)
+#define soa_sxy(i, j) soa_ind(i, j, 3)
+#define soa_syy(i, j) soa_ind(i, j, 4)
+
 /*
  * Vector norm.
  */
@@ -62,7 +69,6 @@ inline real tvd2(const real c, const real u_2, const real u_1, const real u, con
 
 void le_set_ball(le_task *t, const le_vec2 c, const real r, const real s)
 {
-	assert(t->stype == ST_AOS);
 	int i, j;
 	for (i = 0; i < t->n.x; i++) {
 		for (j = 0; j < t->n.y; j++) {
@@ -72,8 +78,15 @@ void le_set_ball(le_task *t, const le_vec2 c, const real r, const real s)
 				/*
 				 * Set pressure disturbance,
 				 */
-				gind(i, j).s.xx = s;
-				gind(i, j).s.yy = s;
+				if (t->stype == ST_AOS) {
+					gind(i, j).s.xx = s;
+					gind(i, j).s.yy = s;
+				} else if (t->stype == ST_SOA) {
+					soa_sxx(i, j) = s;
+					soa_syy(i, j) = s;
+				} else {
+					assert(0);
+				}
 			}
 		}
 	}
@@ -115,7 +128,6 @@ void le_free_task(le_task* task)
 
 int le_save_task(le_task *t, const char *file)
 {
-	assert(t->stype == ST_AOS);
 	int i, j;
 	FILE *fp = fopen(file, "w");
 	if (fp == NULL) {
@@ -136,7 +148,15 @@ int le_save_task(le_task *t, const char *file)
 	fprintf(fp, "LOOKUP_TABLE v_table\n");
 	for (j = 0; j < t->n.y; j++) {
 		for (i = 0; i < t->n.x; i++) {
-			float v = vnorm(gind(i, j).v);
+			float v;
+			if (t->stype == ST_AOS) {
+				v = vnorm(gind(i, j).v);
+			} else if (t->stype == ST_SOA) {
+				le_vec2 vt = { soa_vx(i, j), soa_vy(i, j) };
+				v = vnorm(vt);
+			} else {
+				assert(0);
+			}
 			write_float(fp, v);
 		}
 	}
@@ -233,6 +253,75 @@ inline void reconstruct(const le_w ppu, const le_w pu, const le_w u, const le_w 
 	d->w2 = tvd2(k1, nnu.w2, nu.w2, u.w2, pu.w2) - u.w2; // -c1
 	d->w3 = tvd2(k2, ppu.w3, pu.w3, u.w3, nu.w3) - u.w3; // c2
 	d->w4 = tvd2(k2, nnu.w4, nu.w4, u.w4, pu.w4) - u.w4; // -c2
+}
+
+void le_soa_step_x(le_task *t)
+{
+	assert(t->stype == ST_SOA);
+	int i, j;
+	
+	const real k1 = t->dt * t->mat.c1 / t->h.x;
+	const real k2 = t->dt * t->mat.c2 / t->h.x;
+	
+#define soa_omega_x(i, j, k) \
+	{ \
+	const real nv = soa_vx(i, j); \
+	const real N00T = soa_sxx(i, j) * t->mat.irhoc1; \
+	const real n1v = soa_vy(i, j); \
+	const real N01T = soa_sxy(i, j) * t->mat.irhoc2; \
+	\
+	w1[k + 2] = nv  - N00T; \
+	w2[k + 2] = nv  + N00T; \
+	w3[k + 2] = n1v - N01T; \
+	w4[k + 2] = n1v + N01T; \
+	}\
+
+	for (j = 0; j < t->n.y; j++) {
+		real w1[5], w2[5], w3[5], w4[5];
+		soa_omega_x(0, j, 0);
+		soa_omega_x(1, j, 1);
+		soa_omega_x(2, j, 2);
+		
+#define w_init(w) w[0] = w[1] = w[2];
+		w_init(w1);
+		w_init(w2);
+		w_init(w3);
+		w_init(w4);
+		
+		for (i = 0; i < t->n.x; i++) {
+			real d1 = tvd2(k1, w1[0], w1[1], w1[2], w1[3]) - w1[2];
+			real d2 = tvd2(k1, w2[4], w2[3], w2[2], w2[1]) - w2[2];
+			real d3 = tvd2(k2, w3[0], w3[1], w3[2], w3[3]) - w3[2];
+			real d4 = tvd2(k2, w4[4], w4[3], w4[2], w4[1]) - w4[2];
+			
+			d1 *= 0.5;
+			d2 *= 0.5;
+			d3 *= 0.5;
+			d4 *= 0.5;
+			
+			soa_vx(i, j) += d1 + d2;
+			soa_vy(i, j) += d3 + d4;
+			soa_sxx(i, j) += (d2 - d1) * t->mat.rhoc1;
+			soa_syy(i, j) += (d2 - d1) * t->mat.rhoc3;
+			soa_sxy(i, j) += t->mat.rhoc2 * (d4 - d3);
+
+			
+			//reconstruct(w_2, w_1, w, w1, w2, k1, k2, &d);
+			//inc_x(&t->mat, &gind(i, j), &d);
+			
+#define w_copy(w) \
+			w[0] = w[1];\
+			w[1] = w[2];\
+			w[2] = w[3];\
+			w[3] = w[4];
+			w_copy(w1);
+			w_copy(w2);
+			w_copy(w3);
+			w_copy(w4);
+			
+			if (i < t->n.x - 3) soa_omega_x(i + 3, j, 2);
+		}
+	}
 }
 
 void le_step_x(le_task *t)
@@ -416,6 +505,11 @@ void le_step_cf(le_task *task, const int cfs)
 {
 	le_step_x(task);
 	le_step_y_cf(task, cfs);
+}
+
+void le_step_soa(le_task *task)
+{
+	le_soa_step_x(task);
 }
 
 
