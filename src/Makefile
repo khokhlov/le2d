@@ -1,5 +1,5 @@
-CFLAGS = -O3 -DSAVE_EVERY_STEPS
-#CFLAGS = -O3
+#CFLAGS = -O3 -DSAVE_EVERY_STEPS
+CFLAGS = -O3
 all: le2d le2d_cf le2d_soa
 
 le2d: le_core.h le_core.c main.c

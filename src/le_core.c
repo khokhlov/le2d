@@ -255,6 +255,114 @@ inline void reconstruct(const le_w ppu, const le_w pu, const le_w u, const le_w 
 	d->w4 = tvd2(k2, nnu.w4, nu.w4, u.w4, pu.w4) - u.w4; // -c2
 }
 
+void le_soa_step_y(le_task *t)
+{
+	assert(t->stype == ST_SOA);
+	
+	int i, j;
+	const real k1 = t->dt * t->mat.c1 / t->h.y;
+	const real k2 = t->dt * t->mat.c2 / t->h.y;
+	
+	real *w1[5], *w2[5], *w3[5], *w4[5];
+#define w_malloc(w)\
+	w[0] = (real*)malloc(sizeof(real) * t->n.x);\
+	w[1] = (real*)malloc(sizeof(real) * t->n.x);\
+	w[2] = (real*)malloc(sizeof(real) * t->n.x);\
+	w[3] = (real*)malloc(sizeof(real) * t->n.x);\
+	w[4] = (real*)malloc(sizeof(real) * t->n.x);
+	
+	w_malloc(w1);
+	w_malloc(w2);
+	w_malloc(w3);
+	w_malloc(w4);
+#undef w_malloc
+
+#define soa_omega_y(i, j, k) \
+	{ \
+	const real nv = soa_vy(i, j); \
+	const real N00T = soa_syy(i, j) * t->mat.irhoc1; \
+	const real n1v = soa_vx(i, j); \
+	const real N01T = soa_sxy(i, j) * t->mat.irhoc2; \
+	\
+	w1[k + 2][i] = nv  - N00T; \
+	w2[k + 2][i] = nv  + N00T; \
+	w3[k + 2][i] = n1v - N01T; \
+	w4[k + 2][i] = n1v + N01T; \
+	}
+
+	for (i = 0; i < t->n.x; i++) {
+		soa_omega_y(i, 0, 0);
+		soa_omega_y(i, 1, 1);
+		soa_omega_y(i, 2, 2);
+	}
+#define w_init(w)\
+	for (i = 0; i < t->n.x; i++) {\
+		w[0][i] = w[1][i] = w[2][i];\
+	}
+	
+	w_init(w1);
+	w_init(w2);
+	w_init(w3);
+	w_init(w4);
+#undef w_init
+
+	for (j = 0; j < t->n.y; j++) {
+		for (i = 0; i < t->n.x; i++) {
+			real d1 = tvd2(k1, w1[0][i], w1[1][i], w1[2][i], w1[3][i]) - w1[2][i];
+			real d2 = tvd2(k1, w2[4][i], w2[3][i], w2[2][i], w2[1][i]) - w2[2][i];
+			real d3 = tvd2(k2, w3[0][i], w3[1][i], w3[2][i], w3[3][i]) - w3[2][i];
+			real d4 = tvd2(k2, w4[4][i], w4[3][i], w4[2][i], w4[1][i]) - w4[2][i];
+			d1 *= 0.5;
+			d2 *= 0.5;
+			d3 *= 0.5;
+			d4 *= 0.5;
+
+			soa_vy(i, j) += d1 + d2;
+			soa_vx(i, j) += d3 + d4;
+
+			soa_syy(i, j) += (d2 - d1) * t->mat.rhoc1;
+			soa_sxx(i, j) += (d2 - d1) * t->mat.rhoc3;
+			soa_sxy(i, j) += t->mat.rhoc2 * (d4 - d3);
+		}
+		
+#define w_copy(w)\
+		{\
+		real *t = w[0];\
+		w[0] = w[1];\
+		w[1] = w[2];\
+		w[2] = w[3];\
+		w[3] = w[4];\
+		w[4] = t;\
+		}
+		
+		w_copy(w1);
+		w_copy(w2);
+		w_copy(w3);
+		w_copy(w4);
+#undef w_copy
+		
+		if (j < t->n.y - 3) {
+			for (i = 0; i < t->n.x; i++) {
+				soa_omega_y(i, j + 3, 2);
+			}
+		}
+	}
+
+#define w_free(w)\
+	free(w[0]);\
+	free(w[1]);\
+	free(w[2]);\
+	free(w[3]);\
+	free(w[4]);
+	
+	w_free(w1);
+	w_free(w2);
+	w_free(w3);
+	w_free(w4);
+#undef w_free
+}
+
+
 void le_soa_step_x(le_task *t)
 {
 	assert(t->stype == ST_SOA);
@@ -274,7 +382,7 @@ void le_soa_step_x(le_task *t)
 	w2[k + 2] = nv  + N00T; \
 	w3[k + 2] = n1v - N01T; \
 	w4[k + 2] = n1v + N01T; \
-	}\
+	}
 
 	for (j = 0; j < t->n.y; j++) {
 		real w1[5], w2[5], w3[5], w4[5];
@@ -287,13 +395,12 @@ void le_soa_step_x(le_task *t)
 		w_init(w2);
 		w_init(w3);
 		w_init(w4);
-		
+#undef w_init
 		for (i = 0; i < t->n.x; i++) {
 			real d1 = tvd2(k1, w1[0], w1[1], w1[2], w1[3]) - w1[2];
 			real d2 = tvd2(k1, w2[4], w2[3], w2[2], w2[1]) - w2[2];
 			real d3 = tvd2(k2, w3[0], w3[1], w3[2], w3[3]) - w3[2];
 			real d4 = tvd2(k2, w4[4], w4[3], w4[2], w4[1]) - w4[2];
-			
 			d1 *= 0.5;
 			d2 *= 0.5;
 			d3 *= 0.5;
@@ -318,7 +425,7 @@ void le_soa_step_x(le_task *t)
 			w_copy(w2);
 			w_copy(w3);
 			w_copy(w4);
-			
+#undef w_copy
 			if (i < t->n.x - 3) soa_omega_x(i + 3, j, 2);
 		}
 	}
@@ -510,6 +617,7 @@ void le_step_cf(le_task *task, const int cfs)
 void le_step_soa(le_task *task)
 {
 	le_soa_step_x(task);
+	le_soa_step_y(task);
 }
 
 
