@@ -36,6 +36,8 @@ static __inline__ double timer()
 
 /* Real type. */
 typedef double real;
+#define REAL_PER_SSE 2
+#define sse_t __m128d
 /* Integer type. */
 typedef int int_t;
 

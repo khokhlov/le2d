@@ -6,7 +6,6 @@
 
 #include "le_core.h"
 
-
 /*
  * Mapping 2d array to 1d array.
  */
@@ -19,6 +18,7 @@
 #define soa_sxx(i, j) soa_ind(i, j, 2)
 #define soa_sxy(i, j) soa_ind(i, j, 3)
 #define soa_syy(i, j) soa_ind(i, j, 4)
+
 
 /*
  * Vector norm.
@@ -619,5 +619,4 @@ void le_step_soa(le_task *task)
 	le_soa_step_x(task);
 	le_soa_step_y(task);
 }
-
 
