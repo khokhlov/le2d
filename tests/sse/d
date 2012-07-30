@@ -1,0 +1,3 @@
+type "Base version"   "Cache friendly"      "Cache friendly + sse"
+double 96.893218 88.516515 52.070897
+float 92.255540       65.143300     20.236875
