@@ -59,6 +59,17 @@ typedef double real;
 #define sse_min _mm_min_pd
 #define sse_max _mm_max_pd
 #endif
+
+#if REAL_PER_SSE == 4
+#define sse_t __m128
+#define sse_add _mm_add_ps
+#define sse_sub _mm_sub_ps
+#define sse_mul _mm_mul_ps
+#define sse_div _mm_div_ps
+#define sse_set _mm_set1_ps
+#define sse_min _mm_min_ps
+#define sse_max _mm_max_ps
+#endif
 /* Integer type. */
 typedef int int_t;
 
