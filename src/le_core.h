@@ -37,7 +37,28 @@ static __inline__ double timer()
 /* Real type. */
 typedef double real;
 #define REAL_PER_SSE 2
+
+#if REAL_PER_SSE == 1
+#define sse_t real
+#define sse_add(x, y) (x + y)
+#define sse_sub(x, y) (x - (y))
+#define sse_mul(x, y) ((x) * (y))
+#define sse_div(x, y) ((x) / (y))
+#define sse_set(x) (x)
+#define sse_min(x, y) ((x) > (y) ? (y) : (x))
+#define sse_max(x, y) ((x) < (y) ? (y) : (x))
+#endif
+
+#if REAL_PER_SSE == 2
 #define sse_t __m128d
+#define sse_add _mm_add_pd
+#define sse_sub _mm_sub_pd
+#define sse_mul _mm_mul_pd
+#define sse_div _mm_div_pd
+#define sse_set _mm_set1_pd
+#define sse_min _mm_min_pd
+#define sse_max _mm_max_pd
+#endif
 /* Integer type. */
 typedef int int_t;
 

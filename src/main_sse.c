@@ -13,8 +13,10 @@ const int save_every_step = 0;
 #endif
 
 void le_sse_step_y(le_task *t);
+void le_sse_step_x(le_task *t);
 void le_step_sse(le_task *t)
 {
+	le_sse_step_x(t);
 	le_sse_step_y(t);
 }
 

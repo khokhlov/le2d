@@ -48,17 +48,17 @@ inline real tvd2(const real c, const real u_2, const real u_1, const real u, con
 {
 	real r1 = (u  - u_1);
 	real r2 = (u1 - u);
-	if (r2 == 0.0) {
+	//if (r2 == 0.0) {
 		r1 += TVD2_EPS;
 		r2 += TVD2_EPS;
-	}
+	//}
 	const real r = r1 / r2;
 	r1 = (u_1 - u_2);
 	r2 = (u   - u_1);
-	if (r2 == 0.0) {
+	//if (r2 == 0.0) {
 		r1 += TVD2_EPS;
 		r2 += TVD2_EPS;
-	}
+	//}
 	const real r_1 = r1 / r2;
 
 	const real f12  = u   + limiter(r)   / 2.0 * (1.0 - c) * (u1 - u);
