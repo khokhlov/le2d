@@ -116,7 +116,7 @@ void le_init_task(le_task *task, const real dt, const le_vec2 h, const le_materi
 	task->h   = h;
 	task->mat = mat;
 	task->n   = n;
-	task->grid = (real*)malloc(sizeof(le_node) * n.x * n.y);
+	task->grid = (real*)sse_malloc(sizeof(le_node) * n.x * n.y);
 	task->stype = stype;
 	memset(task->grid, 0, sizeof(le_node) * n.x * n.y);
 }

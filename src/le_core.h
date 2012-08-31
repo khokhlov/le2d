@@ -35,41 +35,98 @@ static __inline__ double timer()
 #define ST_AOS 1
 
 /* Real type. */
+#ifdef USE_DOUBLE
 typedef double real;
-#define REAL_PER_SSE 2
 
-#if REAL_PER_SSE == 1
-#define sse_t real
-#define sse_add(x, y) (x + y)
-#define sse_sub(x, y) (x - (y))
-#define sse_mul(x, y) ((x) * (y))
-#define sse_div(x, y) ((x) / (y))
-#define sse_set(x) (x)
-#define sse_min(x, y) ((x) > (y) ? (y) : (x))
-#define sse_max(x, y) ((x) < (y) ? (y) : (x))
+#ifdef USE_SSE
+	#define REAL_PER_SSE 2
+#elif USE_AVX
+	#define REAL_PER_SSE 4
+#else
+	#define REAL_PER_SSE 1
 #endif
 
+#else
+typedef float real;
+
+#ifdef USE_SSE
+	#define REAL_PER_SSE 4
+#elif USE_AVX
+	#define REAL_PER_SSE 8
+#else
+	#define REAL_PER_SSE 1
+#endif
+
+
+#endif
+
+
+
+/* No sse */
+#if REAL_PER_SSE == 1
+	#define sse_t real
+	#define sse_add(x, y) (x + y)
+	#define sse_sub(x, y) (x - (y))
+	#define sse_mul(x, y) ((x) * (y))
+	#define sse_div(x, y) ((x) / (y))
+	#define sse_set(x) (x)
+	#define sse_min(x, y) ((x) > (y) ? (y) : (x))
+	#define sse_max(x, y) ((x) < (y) ? (y) : (x))
+	#define sse_malloc(x) (malloc((x)))
+#endif
+
+/* double + sse */
 #if REAL_PER_SSE == 2
-#define sse_t __m128d
-#define sse_add _mm_add_pd
-#define sse_sub _mm_sub_pd
-#define sse_mul _mm_mul_pd
-#define sse_div _mm_div_pd
-#define sse_set _mm_set1_pd
-#define sse_min _mm_min_pd
-#define sse_max _mm_max_pd
+	#define sse_t __m128d
+	#define sse_add _mm_add_pd
+	#define sse_sub _mm_sub_pd
+	#define sse_mul _mm_mul_pd
+	#define sse_div _mm_div_pd
+	#define sse_set _mm_set1_pd
+	#define sse_min _mm_min_pd
+	#define sse_max _mm_max_pd
+	#define sse_malloc(x) (memalign(16, (x)))
 #endif
 
 #if REAL_PER_SSE == 4
-#define sse_t __m128
-#define sse_add _mm_add_ps
-#define sse_sub _mm_sub_ps
-#define sse_mul _mm_mul_ps
-#define sse_div _mm_div_ps
-#define sse_set _mm_set1_ps
-#define sse_min _mm_min_ps
-#define sse_max _mm_max_ps
+	/* double + avx */
+	#ifdef USE_DOUBLE
+		#define sse_t __m256d
+		#define sse_add _mm256_add_pd
+		#define sse_sub _mm256_sub_pd
+		#define sse_mul _mm256_mul_pd
+		#define sse_div _mm256_div_pd
+		#define sse_set _mm256_set1_pd
+		#define sse_min _mm256_min_pd
+		#define sse_max _mm256_max_pd
+		#define sse_malloc(x) (memalign(32, (x)))
+	#else /* float + sse */
+		#define sse_t __m128
+		#define sse_add _mm_add_ps
+		#define sse_sub _mm_sub_ps
+		#define sse_mul _mm_mul_ps
+		#define sse_div _mm_div_ps
+		#define sse_set _mm_set1_ps
+		#define sse_min _mm_min_ps
+		#define sse_max _mm_max_ps
+		#define sse_malloc(x) (memalign(16, (x)))
+	#endif
 #endif
+
+/* float + avx */
+#if REAL_PER_SSE == 8
+	#define sse_t __m256
+	#define sse_add _mm256_add_ps
+	#define sse_sub _mm256_sub_ps
+	#define sse_mul _mm256_mul_ps
+	#define sse_div _mm256_div_ps
+	#define sse_set _mm256_set1_ps
+	#define sse_min _mm256_min_ps
+	#define sse_max _mm256_max_ps
+	#define sse_malloc(x) (memalign(32, (x)))
+#endif
+
+
 /* Integer type. */
 typedef int int_t;
 

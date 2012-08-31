@@ -5,6 +5,7 @@
 #include <string.h>
 #include <xmmintrin.h>
 #include <emmintrin.h>
+#include <immintrin.h>
 
 #include "le_core.h"
 
@@ -86,11 +87,11 @@ void le_sse_step_x(le_task *t)
 	real *w1[5], *w2[5], *w3[5], *w4[5];
 	sse_t *sw1[5], *sw2[5], *sw3[5], *sw4[5];
 #define x_malloc(w)\
-	w[0] = (real*)malloc(sizeof(real) * t->n.x);\
-	w[1] = (real*)malloc(sizeof(real) * t->n.x);\
-	w[2] = (real*)malloc(sizeof(real) * t->n.x);\
-	w[3] = (real*)malloc(sizeof(real) * t->n.x);\
-	w[4] = (real*)malloc(sizeof(real) * t->n.x);\
+	w[0] = (real*)sse_malloc(sizeof(real) * t->n.x);\
+	w[1] = (real*)sse_malloc(sizeof(real) * t->n.x);\
+	w[2] = (real*)sse_malloc(sizeof(real) * t->n.x);\
+	w[3] = (real*)sse_malloc(sizeof(real) * t->n.x);\
+	w[4] = (real*)sse_malloc(sizeof(real) * t->n.x);\
 	s##w[0] = (sse_t*)w[0];\
 	s##w[1] = (sse_t*)w[1];\
 	s##w[2] = (sse_t*)w[2];\
@@ -118,7 +119,6 @@ void le_sse_step_x(le_task *t)
 	}
 	
 	
-
 	for (j = 0; j < ny; j++) {
 		for (i = 0; i < nx; i++) {
 			soa_omega_x(i, j, 0);
@@ -202,11 +202,11 @@ void le_sse_step_y(le_task *t)
 	
 	sse_t *w1[5], *w2[5], *w3[5], *w4[5];
 #define w_malloc(w)\
-	w[0] = (sse_t*)malloc(sizeof(real) * t->n.x);\
-	w[1] = (sse_t*)malloc(sizeof(real) * t->n.x);\
-	w[2] = (sse_t*)malloc(sizeof(real) * t->n.x);\
-	w[3] = (sse_t*)malloc(sizeof(real) * t->n.x);\
-	w[4] = (sse_t*)malloc(sizeof(real) * t->n.x);
+	w[0] = (sse_t*)sse_malloc(sizeof(real) * t->n.x);\
+	w[1] = (sse_t*)sse_malloc(sizeof(real) * t->n.x);\
+	w[2] = (sse_t*)sse_malloc(sizeof(real) * t->n.x);\
+	w[3] = (sse_t*)sse_malloc(sizeof(real) * t->n.x);\
+	w[4] = (sse_t*)sse_malloc(sizeof(real) * t->n.x);
 	
 	w_malloc(w1);
 	w_malloc(w2);
