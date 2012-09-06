@@ -73,7 +73,7 @@ void le_sse_step_x(le_task *t)
 	
 	int i, j;
 	int nx = t->n.x / REAL_PER_SSE;
-	int ny = t->n.y;
+	int y1 = t->jmin, y2 = t->jmax;
 	const sse_t k1 = sse_set(t->dt * t->mat.c1 / t->h.x);
 	const sse_t k2 = sse_set(t->dt * t->mat.c2 / t->h.x);
 	const sse_t irhoc1 = sse_set(t->mat.irhoc1);
@@ -119,7 +119,7 @@ void le_sse_step_x(le_task *t)
 	}
 	
 	
-	for (j = 0; j < ny; j++) {
+	for (j = y1; j < y2; j++) {
 		for (i = 0; i < nx; i++) {
 			soa_omega_x(i, j, 0);
 		}
@@ -189,6 +189,7 @@ void le_sse_step_y(le_task *t)
 	
 	int i, j;
 	int nx = t->n.x / REAL_PER_SSE;
+	int y1 = t->jmin, y2 = t->jmax;
 	int ny = t->n.y;
 	const sse_t k1 = sse_set(t->dt * t->mat.c1 / t->h.y);
 	const sse_t k2 = sse_set(t->dt * t->mat.c2 / t->h.y);
@@ -243,7 +244,7 @@ void le_sse_step_y(le_task *t)
 	w_init(w3);
 	w_init(w4);
 #undef w_init
-	for (j = 0; j < ny; j++) {
+	for (j = y1; j < y2; j++) {
 		for (i = 0; i < nx; i++) {
 			sse_t d1 = tvd2_sse(k1, w1[0][i], w1[1][i], w1[2][i], w1[3][i]);
 			sse_t d2 = tvd2_sse(k1, w2[4][i], w2[3][i], w2[2][i], w2[1][i]);

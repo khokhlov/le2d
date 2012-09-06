@@ -1,7 +1,8 @@
 
-CFLAGS = -O3 -mavx
-COMPILER = icc
-#CFLAGS = -O3 -mavx -DSAVE_EVERY_STEPS -g
+AVX = -mavx
+CFLAGS = $(AVX) -O3 -lpthread
+COMPILER = gcc
+#CFLAGS = $(AVX) -O3 -DSAVE_EVERY_STEPS -g -lpthread
 
 all: le2d le2d_cf le2d_soa le2d_sse
 
