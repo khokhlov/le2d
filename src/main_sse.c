@@ -43,6 +43,7 @@ void *tfunc(void *arg)
 				le_save_task(&t->task, name);
 			}
 		}
+		pthread_barrier_wait(t->b);
 		le_step_sse(&t->task);
 	}
 }
