@@ -6,7 +6,8 @@ COMPILER = icc
 all: le2d le2d_cf le2d_soa le2d_sse
 
 le2d: le_core.h le_core.c main.c
-	$(COMPILER) $(CFLAGS) -o le2d main.c le_core.c -lm
+	$(COMPILER) $(CFLAGS)              -o le2d_base_f main.c le_core.c -lm
+	$(COMPILER) $(CFLAGS) -DUSE_DOUBLE -o le2d_base_d main.c le_core.c -lm
 
 le2d_cf: le_core.h le_core.c main_cf.c
 	$(COMPILER) $(CFLAGS) -o le2d_cf main_cf.c le_core.c -lm
