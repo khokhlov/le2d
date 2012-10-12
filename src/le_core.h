@@ -209,9 +209,6 @@ typedef struct {
 	
 	/* Grid data (nodes). */
 	real *grid;
-	
-	/* Grid part on current thread. */
-	int_t jmin, jmax;
 } le_task;
 
 /*

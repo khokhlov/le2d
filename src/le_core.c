@@ -118,8 +118,6 @@ void le_init_task(le_task *task, const real dt, const le_vec2 h, const le_materi
 	task->n   = n;
 	task->grid = (real*)sse_malloc(sizeof(le_node) * n.x * n.y);
 	task->stype = stype;
-	task->jmin = 0;
-	task->jmax = n.y;
 	memset(task->grid, 0, sizeof(le_node) * n.x * n.y);
 }
 
